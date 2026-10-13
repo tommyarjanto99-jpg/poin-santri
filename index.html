@@ -3,121 +3,216 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Poin Santri - Absensi & Reward Pengajian</title>
-    <!-- Tailwind CSS untuk Desain yang Modern & Responsif -->
+    <title>Aplikasi Poin & Absensi Santri</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Alpine.js untuk Logika Interaktif -->
+    <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans" x-data="app()">
 
-    <!-- Header / Navbar -->
+    <!-- Header -->
     <header class="bg-emerald-600 text-white shadow-md">
-        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2">
             <h1 class="text-xl font-bold flex items-center gap-2">
-                🕌 Poin Santri Ceria
+                🕌 Manajemen Poin & Absensi Santri
             </h1>
-            <div class="bg-emerald-700 px-4 py-2 rounded-xl text-sm font-semibold shadow-inner">
-                Total Poin: <span class="text-amber-300 text-lg font-bold" x-text="santri.points">0</span>
+            <!-- Navigasi Tab -->
+            <div class="flex bg-emerald-700 p-1 rounded-xl text-sm font-semibold">
+                <button @click="activeTab = 'poin'" :class="activeTab === 'poin' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-4 py-1.5 rounded-lg transition">✨ Poin & Hadiah</button>
+                <button @click="activeTab = 'absensi'" :class="activeTab === 'absensi' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-4 py-1.5 rounded-lg transition">📋 Rekap Absensi</button>
+                <button @click="activeTab = 'pengaturan'" :class="activeTab === 'pengaturan' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-4 py-1.5 rounded-lg transition">⚙️ Kelola Kelas & Siswa</button>
             </div>
         </div>
     </header>
 
     <!-- Konten Utama -->
-    <main class="max-w-4xl mx-auto px-4 py-6 space-y-6">
+    <main class="max-w-5xl mx-auto px-4 py-6 space-y-6">
 
-        <!-- Input Nama Santri -->
+        <!-- Selector Kelas Aktif (Muncul di semua tab kecuali pengaturan) -->
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div class="w-full sm:w-auto flex-1">
-                <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Nama Santri</label>
-                <input type="text" x-model="santri.name" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Masukkan nama anak...">
+            <div class="w-full sm:w-1/3">
+                <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Pilih Kelas</label>
+                <select x-model="selectedClass" @change="selectedStudentId = null" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <option value="">-- Pilih Kelas --</option>
+                    <template x-for="cls in classes" :key="cls">
+                        <option :value="cls" x-text="'Kelas ' + cls"></option>
+                    </template>
+                </select>
             </div>
-            <button @click="resetData()" class="text-xs text-rose-500 hover:text-rose-700 underline self-end sm:self-center">Reset Data</button>
+            <div class="w-full sm:w-2/3 text-right text-sm text-slate-500">
+                Total Siswa di Kelas: <span class="font-bold text-slate-700" x-text="studentsInClass.length">0</span> anak
+            </div>
         </div>
 
-        <!-- Grid Menu: Catat Poin & Tukar Hadiah -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-            <!-- Bagian 1: Tambah Poin (Aktivitas Positif) -->
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
-                <h2 class="font-bold text-lg text-slate-700 border-b pb-2">✨ Catat Aktivitas Positif</h2>
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-emerald-50 transition">
-                        <div>
-                            <p class="font-semibold text-slate-700">Hadir Pengajian</p>
-                            <p class="text-xs text-slate-500">+10 Poin</p>
-                        </div>
-                        <button @click="addPoints(10, 'Hadir Pengajian')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow transition">+ Hadir</button>
-                    </div>
-
-                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-emerald-50 transition">
-                        <div>
-                            <p class="font-semibold text-slate-700">Adzan / Iqomah</p>
-                            <p class="text-xs text-slate-500">+10 Poin</p>
-                        </div>
-                        <button @click="addPoints(10, 'Adzan / Iqomah')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow transition">+ Adzan</button>
-                    </div>
-
-                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-emerald-50 transition">
-                        <div>
-                            <p class="font-semibold text-slate-700">Sholat Berjamaah</p>
-                            <p class="text-xs text-slate-500">+10 Poin</p>
-                        </div>
-                        <button @click="addPoints(10, 'Sholat Berjamaah')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow transition">+ Sholat</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bagian 2: Tukar Hadiah -->
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
-                <h2 class="font-bold text-lg text-slate-700 border-b pb-2">🎁 Tukar Hadiah</h2>
-                <div class="space-y-3">
-                    <template x-for="item in rewards" :key="item.id">
-                        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-                            <div>
-                                <p class="font-semibold text-slate-700" x-text="item.name"></p>
-                                <p class="text-xs text-amber-600 font-bold" x-text="item.cost + ' Poin'"></p>
-                            </div>
-                            <button @click="redeemReward(item)" 
-                                :class="santri.points >= item.cost ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'"
-                                class="px-4 py-2 rounded-lg text-sm font-medium shadow transition"
-                                :disabled="santri.points < item.cost">
-                                Tukar
-                            </button>
+        <!-- ================= TAB 1: POIN & HADIAH ================= -->
+        <div x-show="activeTab === 'poin'" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Daftar Siswa -->
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                    <h2 class="font-bold text-slate-700 border-b pb-2">Daftar Siswa</h2>
+                    <template x-if="selectedClass && studentsInClass.length > 0">
+                        <div class="space-y-2 max-h-96 overflow-y-auto pr-1">
+                            <template x-for="student in studentsInClass" :key="student.id">
+                                <div @click="selectedStudentId = student.id" 
+                                     :class="selectedStudentId === student.id ? 'bg-emerald-50 border-emerald-500 ring-1 ring-emerald-500' : 'bg-slate-50 hover:bg-slate-100 border-transparent'"
+                                     class="p-3 rounded-xl border cursor-pointer transition flex justify-between items-center">
+                                    <div>
+                                        <p class="font-semibold text-sm text-slate-800" x-text="student.name"></p>
+                                        <p class="text-xs text-amber-600 font-bold" x-text="student.points + ' Poin'"></p>
+                                    </div>
+                                    <span class="text-xs text-emerald-600 font-medium" x-show="selectedStudentId === student.id">Dipilih ✓</span>
+                                </div>
+                            </template>
                         </div>
                     </template>
+                    <template x-if="!selectedClass || studentsInClass.length === 0">
+                        <p class="text-xs text-slate-400 italic text-center py-6">Pilih kelas terlebih dahulu atau tambahkan siswa di tab Pengaturan.</p>
+                    </template>
+                </div>
+
+                <!-- Panel Aksi Poin & Hadiah (Hanya muncul jika siswa dipilih) -->
+                <div class="md:col-span-2 space-y-6" x-show="selectedStudent">
+                    <!-- Info Siswa Terpilih -->
+                    <div class="bg-emerald-700 text-white p-4 rounded-2xl flex justify-between items-center shadow">
+                        <div>
+                            <p class="text-xs text-emerald-200">Siswa Dipilih:</p>
+                            <h3 class="text-lg font-bold" x-text="selectedStudent ? selectedStudent.name : ''"></h3>
+                        </div>
+                        <div class="bg-emerald-800 px-4 py-2 rounded-xl text-right">
+                            <span class="text-xs text-emerald-200 block">Poin Tersedia</span>
+                            <span class="text-amber-300 text-xl font-bold" x-text="selectedStudent ? selectedStudent.points : 0">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Grid Aksi -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Tambah Poin -->
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                            <h4 class="font-bold text-sm text-slate-700 border-b pb-2">✨ Tambah Poin</h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl">
+                                    <span class="text-xs font-medium">Hadir Pengajian (+10)</span>
+                                    <button @click="addPoints(10, 'Hadir Pengajian')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-lg text-xs font-medium">+ Tambah</button>
+                                </div>
+                                <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl">
+                                    <span class="text-xs font-medium">Adzan / Iqomah (+10)</span>
+                                    <button @click="addPoints(10, 'Adzan / Iqomah')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-lg text-xs font-medium">+ Tambah</button>
+                                </div>
+                                <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl">
+                                    <span class="text-xs font-medium">Sholat Berjamaah (+10)</span>
+                                    <button @click="addPoints(10, 'Sholat Berjamaah')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-lg text-xs font-medium">+ Tambah</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tukar Hadiah -->
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                            <h4 class="font-bold text-sm text-slate-700 border-b pb-2">🎁 Tukar Hadiah</h4>
+                            <div class="space-y-2 max-h-48 overflow-y-auto">
+                                <template x-for="item in rewards" :key="item.id">
+                                    <div class="flex justify-between items-center bg-slate-50 p-2 rounded-xl">
+                                        <div>
+                                            <p class="text-xs font-semibold" x-text="item.name"></p>
+                                            <p class="text-[10px] text-amber-600 font-bold" x-text="item.cost + ' Poin'"></p>
+                                        </div>
+                                        <button @click="redeemReward(item)" 
+                                            :class="selectedStudent.points >= item.cost ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'"
+                                            class="px-3 py-1 rounded-lg text-xs font-medium"
+                                            :disabled="selectedStudent.points < item.cost">
+                                            Tukar
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pesan jika belum pilih siswa -->
+                <div class="md:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center text-slate-400 italic" x-show="!selectedStudent">
+                    Silakan klik salah satu nama siswa di sebelah kiri untuk mengelola poin dan hadiahnya.
                 </div>
             </div>
-
         </div>
 
-        <!-- Riwayat Aktivitas & Penukaran -->
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
-            <h2 class="font-bold text-lg text-slate-700 border-b pb-2">📜 Riwayat Aktivitas & Hadiah</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead>
-                        <tr class="text-slate-400 border-b">
-                            <th class="pb-2">Waktu</th>
-                            <th class="pb-2">Keterangan</th>
-                            <th class="pb-2 text-right">Poin</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        <template x-for="history in santri.histories" :key="history.id">
-                            <tr>
-                                <td class="py-3 text-slate-500 text-xs" x-text="history.date"></td>
-                                <td class="py-3 font-medium" x-text="history.desc" :class="history.type === 'reward' ? 'text-amber-600' : 'text-emerald-600'"></td>
-                                <td class="py-3 text-right font-bold" :class="history.type === 'reward' ? 'text-rose-500' : 'text-emerald-600'" x-text="history.points"></td>
-                            </tr>
-                        </template>
-                        <template x-if="santri.histories.length === 0">
-                            <tr>
-                                <td colspan="3" class="py-4 text-center text-slate-400 italic">Belum ada riwayat aktivitas.</td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
+        <!-- ================= TAB 2: REKAP ABSENSI ================= -->
+        <div x-show="activeTab === 'absensi'" class="space-y-6">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4 border-b pb-4">
+                    <h2 class="font-bold text-lg text-slate-700">📋 Rekap Absensi Kelas <span x-text="selectedClass"></span></h2>
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-semibold text-slate-500">Tanggal:</label>
+                        <input type="date" x-model="attendanceDate" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <template x-if="selectedClass && studentsInClass.length > 0">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="text-slate-400 border-b">
+                                    <th class="pb-3">No</th>
+                                    <th class="pb-3">Nama Siswa</th>
+                                    <th class="pb-3 text-center">Status Kehadiran Hari Ini</th>
+                                    <th class="pb-3 text-center">Total Hadir</th>
+                                    <th class="pb-3 text-center">Total Izin</th>
+                                    <th class="pb-3 text-center">Total Alfa</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <template x-for="(student, index) in studentsInClass" :key="student.id">
+                                    <tr>
+                                        <td class="py-3 text-slate-500" x-text="index + 1"></td>
+                                        <td class="py-3 font-medium text-slate-800" x-text="student.name"></td>
+                                        <!-- Tombol Absen Harian -->
+                                        <td class="py-3 text-center space-x-1">
+                                            <button @click="markAttendance(student.id, 'Hadir')" 
+                                                :class="getDailyStatus(student.id) === 'Hadir' ? 'bg-emerald-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                                                class="px-3 py-1 rounded-lg text-xs transition">Hadir</button>
+                                            <button @click="markAttendance(student.id, 'Izin')" 
+                                                :class="getDailyStatus(student.id) === 'Izin' ? 'bg-amber-500 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                                                class="px-3 py-1 rounded-lg text-xs transition">Izin</button>
+                                            <button @click="markAttendance(student.id, 'Alfa')" 
+                                                :class="getDailyStatus(student.id) === 'Alfa' ? 'bg-rose-500 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                                                class="px-3 py-1 rounded-lg text-xs transition">Alfa</button>
+                                        </td>
+                                        <!-- Rekap Total -->
+                                        <td class="py-3 text-center font-bold text-emerald-600" x-text="countAttendance(student.id, 'Hadir')"></td>
+                                        <td class="py-3 text-center font-bold text-amber-600" x-text="countAttendance(student.id, 'Izin')"></td>
+                                        <td class="py-3 text-center font-bold text-rose-500" x-text="countAttendance(student.id, 'Alfa')"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+                <template x-if="!selectedClass || studentsInClass.length === 0">
+                    <p class="text-center text-slate-400 italic py-6">Silakan pilih kelas terlebih dahulu.</p>
+                </template>
+            </div>
+        </div>
+
+        <!-- ================= TAB 3: PENGATURAN & INPUT MASAL ================= -->
+        <div x-show="activeTab === 'pengaturan'" class="space-y-6">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4 max-w-xl mx-auto">
+                <h2 class="font-bold text-lg text-slate-700 border-b pb-2">📥 Input Massal Nama Siswa</h2>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Pilih Kelas Tujuan</label>
+                        <select x-model="inputTargetClass" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="">-- Pilih Kelas --</option>
+                            <template x-for="cls in classes" :key="cls">
+                                <option :value="cls" x-text="'Kelas ' + cls"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Daftar Nama Siswa (1 nama per baris)</label>
+                        <textarea x-model="bulkNames" rows="6" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm" placeholder="Contoh:&#10;Ahmad Zaki&#10;Fatimah Azzahra&#10;Umar Bin Khattab"></textarea>
+                    </div>
+                    <button @click="saveBulkStudents()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl font-medium shadow transition">Simpan / Tambahkan Siswa</button>
+                </div>
             </div>
         </div>
 
@@ -127,52 +222,111 @@
     <script>
         function app() {
             return {
-                santri: JSON.parse(localStorage.getItem('santri_data')) || {
-                    name: 'Ahmad',
-                    points: 0,
-                    histories: []
-                },
+                activeTab: 'poin',
+                classes: ['1', '2', '3', '4', '5', '6', 'A', 'B', 'C', 'D', 'E', 'F'],
+                selectedClass: '1',
+                selectedStudentId: null,
+                inputTargetClass: '1',
+                bulkNames: '',
+                attendanceDate: new Date().toISOString().split('T')[0],
+                
+                // Data utama tersimpan di localStorage
+                students: JSON.parse(localStorage.getItem('santri_all_students')) || [],
+                attendances: JSON.parse(localStorage.getItem('santri_all_attendances')) || [], // {date, studentId, status}
+                
                 rewards: [
                     { id: 1, name: 'Buku Tulis & Pulpen', cost: 30 },
                     { id: 2, name: 'Kotak Pensil Karakter', cost: 50 },
                     { id: 3, name: 'Celengan Anak', cost: 80 },
                     { id: 4, name: 'Tas Punggung Santri', cost: 150 }
                 ],
-                addPoints(amount, activity) {
-                    this.santri.points += amount;
-                    this.santri.histories.unshift({
-                        id: Date.now(),
-                        date: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
-                        desc: `Poin diperoleh dari: ${activity}`,
-                        points: `+${amount}`,
-                        type: 'income'
+
+                get studentsInClass() {
+                    return this.students.filter(s => s.classGroup === this.selectedClass);
+                },
+
+                get selectedStudent() {
+                    return this.students.find(s => s.id === this.selectedStudentId);
+                },
+
+                saveBulkStudents() {
+                    if (!this.inputTargetClass) {
+                        alert('Pilih kelas tujuan terlebih dahulu!');
+                        return;
+                    }
+                    if (!this.bulkNames.trim()) {
+                        alert('Masukkan minimal satu nama siswa!');
+                        return;
+                    }
+
+                    const namesArray = this.bulkNames.split('\n').map(n => n.trim()).filter(n => n !== '');
+                    namesArray.forEach(name => {
+                        this.students.push({
+                            id: 'ST-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+                            classGroup: this.inputTargetClass,
+                            name: name,
+                            points: 0
+                        });
                     });
+
+                    this.saveData();
+                    this.bulkNames = '';
+                    alert('Berhasil menambahkan siswa secara massal!');
+                    this.activeTab = 'poin';
+                    this.selectedClass = this.inputTargetClass;
+                },
+
+                addPoints(amount, activity) {
+                    if (!this.selectedStudent) return;
+                    this.selectedStudent.points += amount;
+                    this.saveData();
+                    alert(`Berhasil menambahkan ${amount} poin untuk ${this.selectedStudent.name}!`);
+                },
+
+                redeemReward(item) {
+                    if (!this.selectedStudent) return;
+                    if (this.selectedStudent.points >= item.cost) {
+                        this.selectedStudent.points -= item.cost;
+                        this.saveData();
+                        alert(`Alhamdulillah! ${this.selectedStudent.name} berhasil menukar: ${item.name}`);
+                    } else {
+                        alert('Maaf, poin siswa belum cukup!');
+                    }
+                },
+
+                markAttendance(studentId, status) {
+                    // Cari apakah sudah ada absensi untuk siswa ini pada tanggal tersebut
+                    const existingIndex = this.attendances.findIndex(a => a.studentId === studentId && a.date === this.attendanceDate);
+                    
+                    if (existingIndex > -1) {
+                        if (this.attendances[existingIndex].status === status) {
+                            // Jika diklik dua kali pada status yang sama, hapus statusnya
+                            this.attendances.splice(existingIndex, 1);
+                        } else {
+                            this.attendances[existingIndex].status = status;
+                        }
+                    } else {
+                        this.attendances.push({
+                            date: this.attendanceDate,
+                            studentId: studentId,
+                            status: status
+                        });
+                    }
                     this.saveData();
                 },
-                redeemReward(item) {
-                    if (this.santri.points >= item.cost) {
-                        this.santri.points -= item.cost;
-                        this.santri.histories.unshift({
-                            id: Date.now(),
-                            date: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
-                            desc: `Menukar hadiah: ${item.name}`,
-                            points: `-${item.cost}`,
-                            type: 'reward'
-                        });
-                        this.saveData();
-                        alert(`Alhamdulillah! Berhasil menukar hadiah: ${item.name}`);
-                    } else {
-                        alert('Maaf, poin santri belum cukup!');
-                    }
+
+                getDailyStatus(studentId) {
+                    const record = this.attendances.find(a => a.studentId === studentId && a.date === this.attendanceDate);
+                    return record ? record.status : null;
                 },
+
+                countAttendance(studentId, status) {
+                    return this.attendances.filter(a => a.studentId === studentId && a.status === status).length;
+                },
+
                 saveData() {
-                    localStorage.setItem('santri_data', JSON.stringify(this.santri));
-                },
-                resetData() {
-                    if (confirm('Yakin ingin mereset data poin dan riwayat?')) {
-                        localStorage.removeItem('santri_data');
-                        this.santri = { name: 'Ahmad', points: 0, histories: [] };
-                    }
+                    localStorage.setItem('santri_all_students', JSON.stringify(this.students));
+                    localStorage.setItem('santri_all_attendances', JSON.stringify(this.attendances));
                 }
             }
         }
