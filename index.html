@@ -1,1 +1,181 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Poin Santri - Absensi & Reward Pengajian</title>
+    <!-- Tailwind CSS untuk Desain yang Modern & Responsif -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js untuk Logika Interaktif -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans" x-data="app()">
 
+    <!-- Header / Navbar -->
+    <header class="bg-emerald-600 text-white shadow-md">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold flex items-center gap-2">
+                🕌 Poin Santri Ceria
+            </h1>
+            <div class="bg-emerald-700 px-4 py-2 rounded-xl text-sm font-semibold shadow-inner">
+                Total Poin: <span class="text-amber-300 text-lg font-bold" x-text="santri.points">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Konten Utama -->
+    <main class="max-w-4xl mx-auto px-4 py-6 space-y-6">
+
+        <!-- Input Nama Santri -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="w-full sm:w-auto flex-1">
+                <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Nama Santri</label>
+                <input type="text" x-model="santri.name" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Masukkan nama anak...">
+            </div>
+            <button @click="resetData()" class="text-xs text-rose-500 hover:text-rose-700 underline self-end sm:self-center">Reset Data</button>
+        </div>
+
+        <!-- Grid Menu: Catat Poin & Tukar Hadiah -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <!-- Bagian 1: Tambah Poin (Aktivitas Positif) -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <h2 class="font-bold text-lg text-slate-700 border-b pb-2">✨ Catat Aktivitas Positif</h2>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-emerald-50 transition">
+                        <div>
+                            <p class="font-semibold text-slate-700">Hadir Pengajian</p>
+                            <p class="text-xs text-slate-500">+10 Poin</p>
+                        </div>
+                        <button @click="addPoints(10, 'Hadir Pengajian')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow transition">+ Hadir</button>
+                    </div>
+
+                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-emerald-50 transition">
+                        <div>
+                            <p class="font-semibold text-slate-700">Adzan / Iqomah</p>
+                            <p class="text-xs text-slate-500">+10 Poin</p>
+                        </div>
+                        <button @click="addPoints(10, 'Adzan / Iqomah')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow transition">+ Adzan</button>
+                    </div>
+
+                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-emerald-50 transition">
+                        <div>
+                            <p class="font-semibold text-slate-700">Sholat Berjamaah</p>
+                            <p class="text-xs text-slate-500">+10 Poin</p>
+                        </div>
+                        <button @click="addPoints(10, 'Sholat Berjamaah')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow transition">+ Sholat</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bagian 2: Tukar Hadiah -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <h2 class="font-bold text-lg text-slate-700 border-b pb-2">🎁 Tukar Hadiah</h2>
+                <div class="space-y-3">
+                    <template x-for="item in rewards" :key="item.id">
+                        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <div>
+                                <p class="font-semibold text-slate-700" x-text="item.name"></p>
+                                <p class="text-xs text-amber-600 font-bold" x-text="item.cost + ' Poin'"></p>
+                            </div>
+                            <button @click="redeemReward(item)" 
+                                :class="santri.points >= item.cost ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'"
+                                class="px-4 py-2 rounded-lg text-sm font-medium shadow transition"
+                                :disabled="santri.points < item.cost">
+                                Tukar
+                            </button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Riwayat Aktivitas & Penukaran -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+            <h2 class="font-bold text-lg text-slate-700 border-b pb-2">📜 Riwayat Aktivitas & Hadiah</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="text-slate-400 border-b">
+                            <th class="pb-2">Waktu</th>
+                            <th class="pb-2">Keterangan</th>
+                            <th class="pb-2 text-right">Poin</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <template x-for="history in santri.histories" :key="history.id">
+                            <tr>
+                                <td class="py-3 text-slate-500 text-xs" x-text="history.date"></td>
+                                <td class="py-3 font-medium" x-text="history.desc" :class="history.type === 'reward' ? 'text-amber-600' : 'text-emerald-600'"></td>
+                                <td class="py-3 text-right font-bold" :class="history.type === 'reward' ? 'text-rose-500' : 'text-emerald-600'" x-text="history.points"></td>
+                            </tr>
+                        </template>
+                        <template x-if="santri.histories.length === 0">
+                            <tr>
+                                <td colspan="3" class="py-4 text-center text-slate-400 italic">Belum ada riwayat aktivitas.</td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Script Logika Alpine.js -->
+    <script>
+        function app() {
+            return {
+                santri: JSON.parse(localStorage.getItem('santri_data')) || {
+                    name: 'Ahmad',
+                    points: 0,
+                    histories: []
+                },
+                rewards: [
+                    { id: 1, name: 'Buku Tulis & Pulpen', cost: 30 },
+                    { id: 2, name: 'Kotak Pensil Karakter', cost: 50 },
+                    { id: 3, name: 'Celengan Anak', cost: 80 },
+                    { id: 4, name: 'Tas Punggung Santri', cost: 150 }
+                ],
+                addPoints(amount, activity) {
+                    this.santri.points += amount;
+                    this.santri.histories.unshift({
+                        id: Date.now(),
+                        date: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
+                        desc: `Poin diperoleh dari: ${activity}`,
+                        points: `+${amount}`,
+                        type: 'income'
+                    });
+                    this.saveData();
+                },
+                redeemReward(item) {
+                    if (this.santri.points >= item.cost) {
+                        this.santri.points -= item.cost;
+                        this.santri.histories.unshift({
+                            id: Date.now(),
+                            date: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
+                            desc: `Menukar hadiah: ${item.name}`,
+                            points: `-${item.cost}`,
+                            type: 'reward'
+                        });
+                        this.saveData();
+                        alert(`Alhamdulillah! Berhasil menukar hadiah: ${item.name}`);
+                    } else {
+                        alert('Maaf, poin santri belum cukup!');
+                    }
+                },
+                saveData() {
+                    localStorage.setItem('santri_data', JSON.stringify(this.santri));
+                },
+                resetData() {
+                    if (confirm('Yakin ingin mereset data poin dan riwayat?')) {
+                        localStorage.removeItem('santri_data');
+                        this.santri = { name: 'Ahmad', points: 0, histories: [] };
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
