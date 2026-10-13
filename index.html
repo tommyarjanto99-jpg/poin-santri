@@ -18,10 +18,11 @@
                 🕌 Manajemen Poin & Absensi Santri
             </h1>
             <!-- Navigasi Tab -->
-            <div class="flex bg-emerald-700 p-1 rounded-xl text-sm font-semibold">
-                <button @click="activeTab = 'poin'" :class="activeTab === 'poin' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-4 py-1.5 rounded-lg transition">✨ Poin & Hadiah</button>
-                <button @click="activeTab = 'absensi'" :class="activeTab === 'absensi' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-4 py-1.5 rounded-lg transition">📋 Rekap Absensi</button>
-                <button @click="activeTab = 'pengaturan'" :class="activeTab === 'pengaturan' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-4 py-1.5 rounded-lg transition">⚙️ Kelola Kelas & Siswa</button>
+            <div class="flex flex-wrap justify-center bg-emerald-700 p-1 rounded-xl text-xs sm:text-sm font-semibold gap-1">
+                <button @click="activeTab = 'poin'" :class="activeTab === 'poin' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-3 py-1.5 rounded-lg transition">✨ Poin & Hadiah</button>
+                <button @click="activeTab = 'absensi'" :class="activeTab === 'absensi' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-3 py-1.5 rounded-lg transition">📋 Rekap Absensi</button>
+                <button @click="activeTab = 'siswa'" :class="activeTab === 'siswa' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-3 py-1.5 rounded-lg transition">👥 Kelola Siswa</button>
+                <button @click="activeTab = 'pengaturan'" :class="activeTab === 'pengaturan' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-3 py-1.5 rounded-lg transition">⚙️ Kelola Hadiah & Poin</button>
             </div>
         </div>
     </header>
@@ -29,8 +30,8 @@
     <!-- Konten Utama -->
     <main class="max-w-5xl mx-auto px-4 py-6 space-y-6">
 
-        <!-- Selector Kelas Aktif (Muncul di semua tab kecuali pengaturan) -->
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <!-- Selector Kelas Aktif (Muncul di tab poin & absensi) -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4" x-show="activeTab === 'poin' || activeTab === 'absensi'">
             <div class="w-full sm:w-1/3">
                 <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Pilih Kelas</label>
                 <select x-model="selectedClass" @change="selectedStudentId = null" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
@@ -67,7 +68,7 @@
                         </div>
                     </template>
                     <template x-if="!selectedClass || studentsInClass.length === 0">
-                        <p class="text-xs text-slate-400 italic text-center py-6">Pilih kelas terlebih dahulu atau tambahkan siswa di tab Pengaturan.</p>
+                        <p class="text-xs text-slate-400 italic text-center py-6">Pilih kelas terlebih dahulu atau tambahkan siswa di tab Kelola Siswa.</p>
                     </template>
                 </div>
 
@@ -87,29 +88,26 @@
 
                     <!-- Grid Aksi -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <!-- Tambah Poin -->
+                        <!-- Tambah Poin Berdasarkan Aktivitas yang Dikonfigurasi -->
                         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
-                            <h4 class="font-bold text-sm text-slate-700 border-b pb-2">✨ Tambah Poin</h4>
-                            <div class="space-y-2">
-                                <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl">
-                                    <span class="text-xs font-medium">Hadir Pengajian (+10)</span>
-                                    <button @click="addPoints(10, 'Hadir Pengajian')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-lg text-xs font-medium">+ Tambah</button>
-                                </div>
-                                <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl">
-                                    <span class="text-xs font-medium">Adzan / Iqomah (+10)</span>
-                                    <button @click="addPoints(10, 'Adzan / Iqomah')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-lg text-xs font-medium">+ Tambah</button>
-                                </div>
-                                <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl">
-                                    <span class="text-xs font-medium">Sholat Berjamaah (+10)</span>
-                                    <button @click="addPoints(10, 'Sholat Berjamaah')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-lg text-xs font-medium">+ Tambah</button>
-                                </div>
+                            <h4 class="font-bold text-sm text-slate-700 border-b pb-2">✨ Tambah Poin Aktivitas</h4>
+                            <div class="space-y-2 max-h-56 overflow-y-auto">
+                                <template x-for="act in activities" :key="act.id">
+                                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl">
+                                        <div>
+                                            <span class="text-xs font-semibold block text-slate-700" x-text="act.name"></span>
+                                            <span class="text-[10px] text-emerald-600 font-bold" x-text="'+' + act.points + ' Poin'"></span>
+                                        </div>
+                                        <button @click="addPoints(act.points, act.name)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-lg text-xs font-medium">+ Tambah</button>
+                                    </div>
+                                </template>
                             </div>
                         </div>
 
                         <!-- Tukar Hadiah -->
                         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
                             <h4 class="font-bold text-sm text-slate-700 border-b pb-2">🎁 Tukar Hadiah</h4>
-                            <div class="space-y-2 max-h-48 overflow-y-auto">
+                            <div class="space-y-2 max-h-56 overflow-y-auto">
                                 <template x-for="item in rewards" :key="item.id">
                                     <div class="flex justify-between items-center bg-slate-50 p-2 rounded-xl">
                                         <div>
@@ -165,7 +163,6 @@
                                     <tr>
                                         <td class="py-3 text-slate-500" x-text="index + 1"></td>
                                         <td class="py-3 font-medium text-slate-800" x-text="student.name"></td>
-                                        <!-- Tombol Absen Harian -->
                                         <td class="py-3 text-center space-x-1">
                                             <button @click="markAttendance(student.id, 'Hadir')" 
                                                 :class="getDailyStatus(student.id) === 'Hadir' ? 'bg-emerald-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
@@ -177,7 +174,6 @@
                                                 :class="getDailyStatus(student.id) === 'Alfa' ? 'bg-rose-500 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
                                                 class="px-3 py-1 rounded-lg text-xs transition">Alfa</button>
                                         </td>
-                                        <!-- Rekap Total -->
                                         <td class="py-3 text-center font-bold text-emerald-600" x-text="countAttendance(student.id, 'Hadir')"></td>
                                         <td class="py-3 text-center font-bold text-amber-600" x-text="countAttendance(student.id, 'Izin')"></td>
                                         <td class="py-3 text-center font-bold text-rose-500" x-text="countAttendance(student.id, 'Alfa')"></td>
@@ -193,8 +189,8 @@
             </div>
         </div>
 
-        <!-- ================= TAB 3: PENGATURAN & INPUT MASAL ================= -->
-        <div x-show="activeTab === 'pengaturan'" class="space-y-6">
+        <!-- ================= TAB 3: KELOLA SISWA (INPUT MASSAL) ================= -->
+        <div x-show="activeTab === 'siswa'" class="space-y-6">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4 max-w-xl mx-auto">
                 <h2 class="font-bold text-lg text-slate-700 border-b pb-2">📥 Input Massal Nama Siswa</h2>
                 <div class="space-y-3">
@@ -216,6 +212,77 @@
             </div>
         </div>
 
+        <!-- ================= TAB 4: KELOLA HADIAH & POIN (BARU) ================= -->
+        <div x-show="activeTab === 'pengaturan'" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Pengaturan Katalog Hadiah -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                    <h2 class="font-bold text-lg text-slate-700 border-b pb-2">🎁 Kelola Katalog Hadiah</h2>
+                    
+                    <!-- Form Tambah/Edit Hadiah -->
+                    <div class="bg-slate-50 p-3 rounded-xl space-y-3 border">
+                        <p class="text-xs font-bold text-slate-600" x-text="editingRewardId ? 'Edit Hadiah' : 'Tambah Hadiah Baru'"></p>
+                        <input type="text" x-model="newRewardName" placeholder="Nama Hadiah (Cth: Buku Tulis)" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <input type="number" x-model.number="newRewardCost" placeholder="Jumlah Poin" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <div class="flex gap-2">
+                            <button @click="saveReward()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 rounded-lg text-xs font-medium shadow transition" x-text="editingRewardId ? 'Perbarui Hadiah' : 'Tambah Hadiah'"></button>
+                            <button @click="cancelEditReward()" x-show="editingRewardId" class="bg-slate-300 hover:bg-slate-400 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium">Batal</button>
+                        </div>
+                    </div>
+
+                    <!-- List Hadiah -->
+                    <div class="space-y-2 max-h-60 overflow-y-auto">
+                        <template x-for="item in rewards" :key="item.id">
+                            <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border">
+                                <div>
+                                    <p class="text-xs font-semibold text-slate-800" x-text="item.name"></p>
+                                    <p class="text-[10px] text-amber-600 font-bold" x-text="item.cost + ' Poin'"></p>
+                                </div>
+                                <div class="space-x-1">
+                                    <button @click="editReward(item)" class="bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 rounded text-[10px]">Edit</button>
+                                    <button @click="deleteReward(item.id)" class="bg-rose-500 hover:bg-rose-600 text-white px-2.5 py-1 rounded text-[10px]">Hapus</button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Pengaturan Aktivitas Poin -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                    <h2 class="font-bold text-lg text-slate-700 border-b pb-2">✨ Kelola Jenis Aktivitas & Poin</h2>
+                    
+                    <!-- Form Tambah/Edit Aktivitas -->
+                    <div class="bg-slate-50 p-3 rounded-xl space-y-3 border">
+                        <p class="text-xs font-bold text-slate-600" x-text="editingActivityId ? 'Edit Aktivitas' : 'Tambah Aktivitas Baru'"></p>
+                        <input type="text" x-model="newActivityName" placeholder="Nama Aktivitas (Cth: Hafalan Surat Pendek)" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <input type="number" x-model.number="newActivityPoints" placeholder="Jumlah Poin (Cth: 15)" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <div class="flex gap-2">
+                            <button @click="saveActivity()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 rounded-lg text-xs font-medium shadow transition" x-text="editingActivityId ? 'Perbarui Aktivitas' : 'Tambah Aktivitas'"></button>
+                            <button @click="cancelEditActivity()" x-show="editingActivityId" class="bg-slate-300 hover:bg-slate-400 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium">Batal</button>
+                        </div>
+                    </div>
+
+                    <!-- List Aktivitas -->
+                    <div class="space-y-2 max-h-60 overflow-y-auto">
+                        <template x-for="act in activities" :key="act.id">
+                            <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border">
+                                <div>
+                                    <p class="text-xs font-semibold text-slate-800" x-text="act.name"></p>
+                                    <p class="text-[10px] text-emerald-600 font-bold" x-text="'+' + act.points + ' Poin'"></p>
+                                </div>
+                                <div class="space-x-1">
+                                    <button @click="editActivity(act)" class="bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 rounded text-[10px]">Edit</button>
+                                    <button @click="deleteActivity(act.id)" class="bg-rose-500 hover:bg-rose-600 text-white px-2.5 py-1 rounded text-[10px]">Hapus</button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
     </main>
 
     <!-- Script Logika Alpine.js -->
@@ -230,16 +297,32 @@
                 bulkNames: '',
                 attendanceDate: new Date().toISOString().split('T')[0],
                 
-                // Data utama tersimpan di localStorage
+                // Data dari LocalStorage atau Default
                 students: JSON.parse(localStorage.getItem('santri_all_students')) || [],
-                attendances: JSON.parse(localStorage.getItem('santri_all_attendances')) || [], // {date, studentId, status}
+                attendances: JSON.parse(localStorage.getItem('santri_all_attendances')) || [],
                 
-                rewards: [
+                rewards: JSON.parse(localStorage.getItem('santri_rewards')) || [
                     { id: 1, name: 'Buku Tulis & Pulpen', cost: 30 },
                     { id: 2, name: 'Kotak Pensil Karakter', cost: 50 },
                     { id: 3, name: 'Celengan Anak', cost: 80 },
                     { id: 4, name: 'Tas Punggung Santri', cost: 150 }
                 ],
+
+                activities: JSON.parse(localStorage.getItem('santri_activities')) || [
+                    { id: 1, name: 'Hadir Pengajian', points: 10 },
+                    { id: 2, name: 'Adzan / Iqomah', points: 10 },
+                    { id: 3, name: 'Sholat Berjamaah', points: 10 }
+                ],
+
+                // Form state untuk Hadiah
+                editingRewardId: null,
+                newRewardName: '',
+                newRewardCost: '',
+
+                // Form state untuk Aktivitas
+                editingActivityId: null,
+                newActivityName: '',
+                newActivityPoints: '',
 
                 get studentsInClass() {
                     return this.students.filter(s => s.classGroup === this.selectedClass);
@@ -250,15 +333,10 @@
                 },
 
                 saveBulkStudents() {
-                    if (!this.inputTargetClass) {
-                        alert('Pilih kelas tujuan terlebih dahulu!');
+                    if (!this.inputTargetClass || !this.bulkNames.trim()) {
+                        alert('Pilih kelas dan masukkan nama siswa terlebih dahulu!');
                         return;
                     }
-                    if (!this.bulkNames.trim()) {
-                        alert('Masukkan minimal satu nama siswa!');
-                        return;
-                    }
-
                     const namesArray = this.bulkNames.split('\n').map(n => n.trim()).filter(n => n !== '');
                     namesArray.forEach(name => {
                         this.students.push({
@@ -268,7 +346,6 @@
                             points: 0
                         });
                     });
-
                     this.saveData();
                     this.bulkNames = '';
                     alert('Berhasil menambahkan siswa secara massal!');
@@ -276,11 +353,11 @@
                     this.selectedClass = this.inputTargetClass;
                 },
 
-                addPoints(amount, activity) {
+                addPoints(amount, activityName) {
                     if (!this.selectedStudent) return;
                     this.selectedStudent.points += amount;
                     this.saveData();
-                    alert(`Berhasil menambahkan ${amount} poin untuk ${this.selectedStudent.name}!`);
+                    alert(`Berhasil menambahkan ${amount} poin (${activityName}) untuk ${this.selectedStudent.name}!`);
                 },
 
                 redeemReward(item) {
@@ -288,29 +365,22 @@
                     if (this.selectedStudent.points >= item.cost) {
                         this.selectedStudent.points -= item.cost;
                         this.saveData();
-                        alert(`Alhamdulillah! ${this.selectedStudent.name} berhasil menukar: ${item.name}`);
+                        alert(`Alhamdulillah! ${this.selectedStudent.name} berhasil menukar hadiah: ${item.name}`);
                     } else {
                         alert('Maaf, poin siswa belum cukup!');
                     }
                 },
 
                 markAttendance(studentId, status) {
-                    // Cari apakah sudah ada absensi untuk siswa ini pada tanggal tersebut
                     const existingIndex = this.attendances.findIndex(a => a.studentId === studentId && a.date === this.attendanceDate);
-                    
                     if (existingIndex > -1) {
                         if (this.attendances[existingIndex].status === status) {
-                            // Jika diklik dua kali pada status yang sama, hapus statusnya
                             this.attendances.splice(existingIndex, 1);
                         } else {
                             this.attendances[existingIndex].status = status;
                         }
                     } else {
-                        this.attendances.push({
-                            date: this.attendanceDate,
-                            studentId: studentId,
-                            status: status
-                        });
+                        this.attendances.push({ date: this.attendanceDate, studentId: studentId, status: status });
                     }
                     this.saveData();
                 },
@@ -324,9 +394,93 @@
                     return this.attendances.filter(a => a.studentId === studentId && a.status === status).length;
                 },
 
+                // Manajemen Hadiah
+                saveReward() {
+                    if (!this.newRewardName.trim() || !this.newRewardCost) {
+                        alert('Nama hadiah dan jumlah poin harus diisi!');
+                        return;
+                    }
+                    if (this.editingRewardId) {
+                        const item = this.rewards.find(r => r.id === this.editingRewardId);
+                        if (item) {
+                            item.name = this.newRewardName;
+                            item.cost = parseInt(this.newRewardCost);
+                        }
+                        this.editingRewardId = null;
+                    } else {
+                        this.rewards.push({
+                            id: Date.now(),
+                            name: this.newRewardName,
+                            cost: parseInt(this.newRewardCost)
+                        });
+                    }
+                    this.newRewardName = '';
+                    this.newRewardCost = '';
+                    this.saveData();
+                },
+                editReward(item) {
+                    this.editingRewardId = item.id;
+                    this.newRewardName = item.name;
+                    this.newRewardCost = item.cost;
+                },
+                cancelEditReward() {
+                    this.editingRewardId = null;
+                    this.newRewardName = '';
+                    this.newRewardCost = '';
+                },
+                deleteReward(id) {
+                    if (confirm('Yakin ingin menghapus hadiah ini dari katalog?')) {
+                        this.rewards = this.rewards.filter(r => r.id !== id);
+                        this.saveData();
+                    }
+                },
+
+                // Manajemen Aktivitas
+                saveActivity() {
+                    if (!this.newActivityName.trim() || !this.newActivityPoints) {
+                        alert('Nama aktivitas dan jumlah poin harus diisi!');
+                        return;
+                    }
+                    if (this.editingActivityId) {
+                        const act = this.activities.find(a => a.id === this.editingActivityId);
+                        if (act) {
+                            act.name = this.newActivityName;
+                            act.points = parseInt(this.newActivityPoints);
+                        }
+                        this.editingActivityId = null;
+                    } else {
+                        this.activities.push({
+                            id: Date.now(),
+                            name: this.newActivityName,
+                            points: parseInt(this.newActivityPoints)
+                        });
+                    }
+                    this.newActivityName = '';
+                    this.newActivityPoints = '';
+                    this.saveData();
+                },
+                editActivity(act) {
+                    this.editingActivityId = act.id;
+                    this.newActivityName = act.name;
+                    this.newActivityPoints = act.points;
+                },
+                cancelEditActivity() {
+                    this.editingActivityId = null;
+                    this.newActivityName = '';
+                    this.newActivityPoints = '';
+                },
+                deleteActivity(id) {
+                    if (confirm('Yakin ingin menghapus aktivitas ini?')) {
+                        this.activities = this.activities.filter(a => a.id !== id);
+                        this.saveData();
+                    }
+                },
+
                 saveData() {
                     localStorage.setItem('santri_all_students', JSON.stringify(this.students));
                     localStorage.setItem('santri_all_attendances', JSON.stringify(this.attendances));
+                    localStorage.setItem('santri_rewards', JSON.stringify(this.rewards));
+                    localStorage.setItem('santri_activities', JSON.stringify(this.activities));
                 }
             }
         }
