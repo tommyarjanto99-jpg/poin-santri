@@ -209,10 +209,11 @@
                                 <tr class="text-slate-400 border-b">
                                     <th class="pb-3 w-12 text-center">No</th>
                                     <th class="pb-3">Nama Siswa</th>
-                                    <th class="pb-3 text-center">Input Status Absen Hari Ini</th>
+                                    <th class="pb-3 text-center">Input / Edit Status Absen Hari Ini</th>
                                     <th class="pb-3 text-center bg-emerald-50/50 rounded-t-lg">Total Hadir</th>
                                     <th class="pb-3 text-center bg-amber-50/50 rounded-t-lg">Total Izin</th>
                                     <th class="pb-3 text-center bg-rose-50/50 rounded-t-lg">Total Alfa</th>
+                                    <th class="pb-3 text-center">Aksi Admin</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
@@ -220,22 +221,30 @@
                                     <tr class="hover:bg-slate-50/80">
                                         <td class="py-3 text-center text-slate-500" x-text="index + 1"></td>
                                         <td class="py-3 font-semibold text-slate-800" x-text="student.name"></td>
-                                        <!-- Tombol Input Absen untuk Admin -->
+                                        
+                                        <!-- Tombol Input / Edit Status Absen -->
                                         <td class="py-3 text-center space-x-1">
                                             <button @click="markAttendance(student.id, 'Hadir')" 
-                                                :class="getDailyStatus(student.id) === 'Hadir' ? 'bg-emerald-600 text-white font-bold shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                                                :class="getDailyStatus(student.id) === 'Hadir' ? 'bg-emerald-600 text-white font-bold shadow-sm ring-2 ring-emerald-300' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
                                                 class="px-3 py-1.5 rounded-lg text-xs transition">Hadir</button>
                                             <button @click="markAttendance(student.id, 'Izin')" 
-                                                :class="getDailyStatus(student.id) === 'Izin' ? 'bg-amber-500 text-white font-bold shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                                                :class="getDailyStatus(student.id) === 'Izin' ? 'bg-amber-500 text-white font-bold shadow-sm ring-2 ring-amber-300' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
                                                 class="px-3 py-1.5 rounded-lg text-xs transition">Izin</button>
                                             <button @click="markAttendance(student.id, 'Alfa')" 
-                                                :class="getDailyStatus(student.id) === 'Alfa' ? 'bg-rose-500 text-white font-bold shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                                                :class="getDailyStatus(student.id) === 'Alfa' ? 'bg-rose-500 text-white font-bold shadow-sm ring-2 ring-rose-300' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
                                                 class="px-3 py-1.5 rounded-lg text-xs transition">Alfa</button>
                                         </td>
+
                                         <!-- Rekapan Akumulasi Total Absen -->
                                         <td class="py-3 text-center font-bold text-emerald-600 bg-emerald-50/30" x-text="countAttendance(student.id, 'Hadir')"></td>
                                         <td class="py-3 text-center font-bold text-amber-600 bg-amber-50/30" x-text="countAttendance(student.id, 'Izin')"></td>
                                         <td class="py-3 text-center font-bold text-rose-500 bg-rose-50/30" x-text="countAttendance(student.id, 'Alfa')"></td>
+
+                                        <!-- Tombol Hapus / Reset Absen Tanggal Tersebut -->
+                                        <td class="py-3 text-center">
+                                            <button @click="deleteAttendance(student.id)" x-show="getDailyStatus(student.id)" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-2.5 py-1 rounded-lg text-[10px] font-semibold transition">Hapus Absen</button>
+                                            <span class="text-slate-300 text-xs" x-show="!getDailyStatus(student.id)">-</span>
+                                        </td>
                                     </tr>
                                 </template>
                             </tbody>
@@ -606,20 +615,43 @@
                     }
                 },
 
-                // Fungsi Pengisian Absensi oleh Admin ke Supabase
+                // Fungsi Pengisian & Edit Absensi oleh Admin ke Supabase
                 async markAttendance(studentId, status) {
                     const existing = this.attendances.find(a => a.student_id === studentId && a.date === this.attendanceDate);
                     
                     if (existing) {
-                        if (existing.status === status) {
-                            await supabaseClient.from('attendances').delete().eq('id', existing.id);
-                        } else {
-                            await supabaseClient.from('attendances').update({ status: status }).eq('id', existing.id);
-                        }
+                        // Jika sudah ada data di tanggal tersebut, update statusnya (Edit)
+                        const { error } = await supabaseClient
+                            .from('attendances')
+                            .update({ status: status })
+                            .eq('id', existing.id);
+                        if (error) alert('Gagal memperbarui absensi: ' + error.message);
                     } else {
-                        await supabaseClient.from('attendances').insert({ date: this.attendanceDate, student_id: studentId, status: status });
+                        // Jika belum ada, masukkan data baru (Insert)
+                        const { error } = await supabaseClient
+                            .from('attendances')
+                            .insert({ date: this.attendanceDate, student_id: studentId, status: status });
+                        if (error) alert('Gagal menyimpan absensi: ' + error.message);
                     }
                     await this.fetchAllData();
+                },
+
+                // Fungsi Hapus / Reset Absen pada Tanggal Terpilih
+                async deleteAttendance(studentId) {
+                    const existing = this.attendances.find(a => a.student_id === studentId && a.date === this.attendanceDate);
+                    if (!existing) return;
+
+                    if (confirm('Yakin ingin menghapus status absensi siswa ini pada tanggal tersebut?')) {
+                        const { error } = await supabaseClient
+                            .from('attendances')
+                            .delete()
+                            .eq('id', existing.id);
+                        if (error) {
+                            alert('Gagal menghapus absensi: ' + error.message);
+                        } else {
+                            await this.fetchAllData();
+                        }
+                    }
                 },
 
                 getDailyStatus(studentId) {
