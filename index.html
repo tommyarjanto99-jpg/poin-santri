@@ -185,12 +185,12 @@
             </div>
         </div>
 
-        <!-- ================= TAB 2: REKAP ABSENSI (KHUSUS ADMIN) ================= -->
+        <!-- ================= TAB 2: REKAP ABSENSI & INPUT ABSENSI (KHUSUS ADMIN) ================= -->
         <div x-show="activeTab === 'absensi'" class="space-y-6">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                 <div class="flex flex-col sm:flex-row justify-between items-center gap-4 border-b pb-4">
                     <div class="flex items-center gap-3">
-                        <h2 class="font-bold text-lg text-slate-700">📋 Rekap Absensi Kelas <span x-text="selectedClass"></span></h2>
+                        <h2 class="font-bold text-lg text-slate-700">📋 Input & Rekap Absensi Kelas <span x-text="selectedClass"></span></h2>
                         <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">Mode Admin</span>
                     </div>
                     <div class="flex items-center gap-4">
@@ -207,33 +207,35 @@
                         <table class="w-full text-left text-sm">
                             <thead>
                                 <tr class="text-slate-400 border-b">
-                                    <th class="pb-3">No</th>
+                                    <th class="pb-3 w-12 text-center">No</th>
                                     <th class="pb-3">Nama Siswa</th>
-                                    <th class="pb-3 text-center">Status Kehadiran Hari Ini</th>
-                                    <th class="pb-3 text-center">Total Hadir</th>
-                                    <th class="pb-3 text-center">Total Izin</th>
-                                    <th class="pb-3 text-center">Total Alfa</th>
+                                    <th class="pb-3 text-center">Input Status Absen Hari Ini</th>
+                                    <th class="pb-3 text-center bg-emerald-50/50 rounded-t-lg">Total Hadir</th>
+                                    <th class="pb-3 text-center bg-amber-50/50 rounded-t-lg">Total Izin</th>
+                                    <th class="pb-3 text-center bg-rose-50/50 rounded-t-lg">Total Alfa</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 <template x-for="(student, index) in studentsInClass" :key="student.id">
-                                    <tr>
-                                        <td class="py-3 text-slate-500" x-text="index + 1"></td>
-                                        <td class="py-3 font-medium text-slate-800" x-text="student.name"></td>
+                                    <tr class="hover:bg-slate-50/80">
+                                        <td class="py-3 text-center text-slate-500" x-text="index + 1"></td>
+                                        <td class="py-3 font-semibold text-slate-800" x-text="student.name"></td>
+                                        <!-- Tombol Input Absen untuk Admin -->
                                         <td class="py-3 text-center space-x-1">
                                             <button @click="markAttendance(student.id, 'Hadir')" 
-                                                :class="getDailyStatus(student.id) === 'Hadir' ? 'bg-emerald-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-                                                class="px-3 py-1 rounded-lg text-xs transition">Hadir</button>
+                                                :class="getDailyStatus(student.id) === 'Hadir' ? 'bg-emerald-600 text-white font-bold shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                                                class="px-3 py-1.5 rounded-lg text-xs transition">Hadir</button>
                                             <button @click="markAttendance(student.id, 'Izin')" 
-                                                :class="getDailyStatus(student.id) === 'Izin' ? 'bg-amber-500 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-                                                class="px-3 py-1 rounded-lg text-xs transition">Izin</button>
+                                                :class="getDailyStatus(student.id) === 'Izin' ? 'bg-amber-500 text-white font-bold shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                                                class="px-3 py-1.5 rounded-lg text-xs transition">Izin</button>
                                             <button @click="markAttendance(student.id, 'Alfa')" 
-                                                :class="getDailyStatus(student.id) === 'Alfa' ? 'bg-rose-500 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-                                                class="px-3 py-1 rounded-lg text-xs transition">Alfa</button>
+                                                :class="getDailyStatus(student.id) === 'Alfa' ? 'bg-rose-500 text-white font-bold shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                                                class="px-3 py-1.5 rounded-lg text-xs transition">Alfa</button>
                                         </td>
-                                        <td class="py-3 text-center font-bold text-emerald-600" x-text="countAttendance(student.id, 'Hadir')"></td>
-                                        <td class="py-3 text-center font-bold text-amber-600" x-text="countAttendance(student.id, 'Izin')"></td>
-                                        <td class="py-3 text-center font-bold text-rose-500" x-text="countAttendance(student.id, 'Alfa')"></td>
+                                        <!-- Rekapan Akumulasi Total Absen -->
+                                        <td class="py-3 text-center font-bold text-emerald-600 bg-emerald-50/30" x-text="countAttendance(student.id, 'Hadir')"></td>
+                                        <td class="py-3 text-center font-bold text-amber-600 bg-amber-50/30" x-text="countAttendance(student.id, 'Izin')"></td>
+                                        <td class="py-3 text-center font-bold text-rose-500 bg-rose-50/30" x-text="countAttendance(student.id, 'Alfa')"></td>
                                     </tr>
                                 </template>
                             </tbody>
@@ -281,7 +283,7 @@
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
-                <!-- Menu Input Poin Manual (Simple & Realtime Supabase) -->
+                <!-- Menu Input Poin Manual -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                     <h2 class="font-bold text-lg text-slate-700 border-b pb-2">✍️ Input Poin Manual</h2>
                     <div class="space-y-3">
@@ -382,11 +384,9 @@
 
     <!-- Script Logika & Koneksi Supabase Real-time -->
     <script>
-        // Kunci Supabase Anda sudah terpasang di sini
         const SUPABASE_URL = 'https://jjddwximhbfbvmfiivah.supabase.co/rest/v1/';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqZGR3eGltaGJmYnZtZmlpdmFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ0MDg5OTUsImV4cCI6MjEwOTk4NDk5NX0.PhnfB_Mndf_fMg89oWdIz3G-2UKBWgt5AuumDgncLXg';
         
-        // Membersihkan URL jika ada akhiran /rest/v1/ agar sesuai dengan format client Supabase
         const cleanUrl = SUPABASE_URL.replace(/\/rest\/v1\/?$/, '');
         const supabaseClient = window.supabase.createClient(cleanUrl, SUPABASE_ANON_KEY);
 
@@ -455,7 +455,6 @@
                     }
                 },
 
-                // Mengaktifkan Realtime Updates dari Supabase
                 setupRealtimeListeners() {
                     supabaseClient.channel('public-db-changes')
                         .on('postgres_changes', { event: '*', schema: 'public' }, () => {
@@ -551,7 +550,6 @@
                     }
                 },
 
-                // Fungsi Input Poin Manual Real-time
                 async addManualPointsGlobal() {
                     if (!this.manualTargetStudentId) {
                         alert('Pilih siswa terlebih dahulu!');
@@ -608,6 +606,7 @@
                     }
                 },
 
+                // Fungsi Pengisian Absensi oleh Admin ke Supabase
                 async markAttendance(studentId, status) {
                     const existing = this.attendances.find(a => a.student_id === studentId && a.date === this.attendanceDate);
                     
