@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Poin & Absensi Santri</title>
+    <title>Management GENERUS Kelompok Cepogo</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Alpine.js -->
@@ -15,12 +15,12 @@
     <header class="bg-emerald-600 text-white shadow-md">
         <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2">
             <h1 class="text-xl font-bold flex items-center gap-2">
-                🕌 Manajemen Poin & Absensi Santri
+                🕌 Management GENERUS Kelompok Cepogo
             </h1>
             <!-- Navigasi Tab -->
             <div class="flex flex-wrap justify-center bg-emerald-700 p-1 rounded-xl text-xs sm:text-sm font-semibold gap-1">
                 <button @click="activeTab = 'poin'" :class="activeTab === 'poin' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-3 py-1.5 rounded-lg transition">✨ Poin & Hadiah</button>
-                <button @click="activeTab = 'absensi'" :class="activeTab === 'absensi' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-3 py-1.5 rounded-lg transition">📋 Rekap Absensi</button>
+                <button @click="switchTab('absensi')" :class="activeTab === 'absensi' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-3 py-1.5 rounded-lg transition">📋 Rekap Absensi 🔒</button>
                 <button @click="switchTab('siswa')" :class="activeTab === 'siswa' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-3 py-1.5 rounded-lg transition">👥 Kelola Siswa 🔒</button>
                 <button @click="switchTab('pengaturan')" :class="activeTab === 'pengaturan' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-3 py-1.5 rounded-lg transition">⚙️ Kelola Hadiah & Poin 🔒</button>
             </div>
@@ -51,7 +51,7 @@
             <div class="text-center space-y-1">
                 <span class="text-3xl">🔐</span>
                 <h2 class="font-bold text-lg text-slate-700">Autentikasi Admin</h2>
-                <p class="text-xs text-slate-400">Masukkan password admin untuk mengakses menu <span class="font-semibold text-emerald-600" x-text="targetProtectedTab === 'siswa' ? 'Kelola Siswa' : 'Kelola Hadiah & Poin'"></span>.</p>
+                <p class="text-xs text-slate-400">Masukkan password admin untuk mengakses menu <span class="font-semibold text-emerald-600" x-text="getProtectedTabName()"></span>.</p>
             </div>
             <div class="space-y-3 pt-2">
                 <div>
@@ -97,11 +97,11 @@
                         <p class="text-xs text-slate-400 italic text-center py-4">Siswa tidak ditemukan.</p>
                     </template>
                     <template x-if="!selectedClass || studentsInClass.length === 0">
-                        <p class="text-xs text-slate-400 italic text-center py-6">Pilih kelas terlebih dahulu. (Penambahan siswa baru hanya dapat dilakukan oleh Admin).</p>
+                        <p class="text-xs text-slate-400 italic text-center py-6">Pilih kelas terlebih dahulu. (Penambahan siswa baru hanya melalui menu Admin).</p>
                     </template>
                 </div>
 
-                <!-- Panel Aksi Poin & Hadiah (Hanya muncul jika siswa dipilih) -->
+                <!-- Panel Aksi Poin, Absensi & Hadiah (Hanya muncul jika siswa dipilih) -->
                 <div class="md:col-span-2 space-y-6" x-show="selectedStudent">
                     <!-- Info Siswa Terpilih & Tampilan Poin Paling Besar -->
                     <div class="bg-gradient-to-r from-emerald-700 to-teal-800 text-white p-6 rounded-2xl flex flex-col sm:flex-row justify-between items-center shadow-md gap-4">
@@ -112,6 +112,25 @@
                         <div class="bg-emerald-900/80 border border-emerald-600 px-6 py-3 rounded-2xl text-center sm:text-right shadow-inner">
                             <span class="text-xs text-emerald-200 block uppercase tracking-wider">Jumlah Poin Siswa</span>
                             <span class="text-amber-300 text-4xl font-black tracking-tight" x-text="selectedStudent ? selectedStudent.points : 0">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Rekap Absensi Siswa Terpilih (BARU) -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                        <h4 class="font-bold text-sm text-slate-700 border-b pb-2">📋 Ringkasan Absensi Siswa Terpilih</h4>
+                        <div class="grid grid-cols-3 gap-3 text-center">
+                            <div class="bg-emerald-50 border border-emerald-100 p-3 rounded-xl">
+                                <span class="block text-[10px] font-bold uppercase text-emerald-600">Total Hadir</span>
+                                <span class="text-lg font-black text-emerald-700" x-text="countAttendance(selectedStudentId, 'Hadir')">0</span>
+                            </div>
+                            <div class="bg-amber-50 border border-amber-100 p-3 rounded-xl">
+                                <span class="block text-[10px] font-bold uppercase text-amber-600">Total Izin</span>
+                                <span class="text-lg font-black text-amber-700" x-text="countAttendance(selectedStudentId, 'Izin')">0</span>
+                            </div>
+                            <div class="bg-rose-50 border border-rose-100 p-3 rounded-xl">
+                                <span class="block text-[10px] font-bold uppercase text-rose-500">Total Alfa</span>
+                                <span class="text-lg font-black text-rose-600" x-text="countAttendance(selectedStudentId, 'Alfa')">0</span>
+                            </div>
                         </div>
                     </div>
 
@@ -158,19 +177,25 @@
 
                 <!-- Pesan jika belum pilih siswa -->
                 <div class="md:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center text-slate-400 italic" x-show="!selectedStudent">
-                    Silakan klik salah satu nama siswa di sebelah kiri untuk melihat detail poin dan menukar hadiah.
+                    Silakan klik salah satu nama siswa di sebelah kiri untuk melihat detail poin, absensi, dan menukar hadiah.
                 </div>
             </div>
         </div>
 
-        <!-- ================= TAB 2: REKAP ABSENSI ================= -->
+        <!-- ================= TAB 2: REKAP ABSENSI (KHUSUS ADMIN) ================= -->
         <div x-show="activeTab === 'absensi'" class="space-y-6">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                 <div class="flex flex-col sm:flex-row justify-between items-center gap-4 border-b pb-4">
-                    <h2 class="font-bold text-lg text-slate-700">📋 Rekap Absensi Kelas <span x-text="selectedClass"></span></h2>
-                    <div class="flex items-center gap-2">
-                        <label class="text-xs font-semibold text-slate-500">Tanggal:</label>
-                        <input type="date" x-model="attendanceDate" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <div class="flex items-center gap-3">
+                        <h2 class="font-bold text-lg text-slate-700">📋 Rekap Absensi Kelas <span x-text="selectedClass"></span></h2>
+                        <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">Mode Admin</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs font-semibold text-slate-500">Tanggal:</label>
+                            <input type="date" x-model="attendanceDate" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <button @click="isAdminLoggedIn = false; activeTab = 'poin'" class="text-xs text-rose-500 hover:underline font-semibold">Keluar Admin</button>
                     </div>
                 </div>
 
@@ -414,6 +439,13 @@
                         this.adminPasswordInput = '';
                         this.activeTab = 'auth_admin';
                     }
+                },
+
+                getProtectedTabName() {
+                    if (this.targetProtectedTab === 'absensi') return 'Rekap Absensi';
+                    if (this.targetProtectedTab === 'siswa') return 'Kelola Siswa';
+                    if (this.targetProtectedTab === 'pengaturan') return 'Kelola Hadiah & Poin';
+                    return '';
                 },
 
                 verifyAdmin() {
