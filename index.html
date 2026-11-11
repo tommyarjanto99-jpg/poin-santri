@@ -34,7 +34,7 @@
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4" x-show="activeTab === 'poin' || activeTab === 'absensi'">
             <div class="w-full sm:w-1/3">
                 <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Pilih Kelas</label>
-                <select x-model="selectedClass" @change="selectedStudentId = null" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <select x-model="selectedClass" @change="selectedStudentId = null; studentSearchQuery = ''" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     <option value="">-- Pilih Kelas --</option>
                     <template x-for="cls in classes" :key="cls">
                         <option :value="cls" x-text="'Kelas ' + cls"></option>
@@ -52,9 +52,16 @@
                 <!-- Daftar Siswa -->
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
                     <h2 class="font-bold text-slate-700 border-b pb-2">Daftar Siswa</h2>
-                    <template x-if="selectedClass && studentsInClass.length > 0">
-                        <div class="space-y-2 max-h-96 overflow-y-auto pr-1">
-                            <template x-for="student in studentsInClass" :key="student.id">
+                    
+                    <!-- Kotak Pencarian Siswa -->
+                    <div class="relative" x-show="selectedClass">
+                        <input type="text" x-model="studentSearchQuery" placeholder="Cari nama siswa..." class="w-full border border-slate-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 pl-8">
+                        <span class="absolute left-2.5 top-2 text-slate-400 text-xs">🔍</span>
+                    </div>
+
+                    <template x-if="selectedClass && filteredStudentsInClass.length > 0">
+                        <div class="space-y-2 max-h-80 overflow-y-auto pr-1">
+                            <template x-for="student in filteredStudentsInClass" :key="student.id">
                                 <div @click="selectedStudentId = student.id" 
                                      :class="selectedStudentId === student.id ? 'bg-emerald-50 border-emerald-500 ring-1 ring-emerald-500' : 'bg-slate-50 hover:bg-slate-100 border-transparent'"
                                      class="p-3 rounded-xl border cursor-pointer transition flex justify-between items-center">
@@ -66,6 +73,9 @@
                                 </div>
                             </template>
                         </div>
+                    </template>
+                    <template x-if="selectedClass && filteredStudentsInClass.length === 0">
+                        <p class="text-xs text-slate-400 italic text-center py-4">Siswa tidak ditemukan.</p>
                     </template>
                     <template x-if="!selectedClass || studentsInClass.length === 0">
                         <p class="text-xs text-slate-400 italic text-center py-6">Pilih kelas terlebih dahulu atau tambahkan siswa di tab Kelola Siswa.</p>
@@ -104,12 +114,28 @@
                             </div>
                         </div>
 
-                        <!-- Tukar Hadiah -->
+                        <!-- Panel Tambah Poin Manual (BARU) -->
                         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                            <h4 class="font-bold text-sm text-slate-700 border-b pb-2">✍️ Input Poin Manual</h4>
+                            <div class="space-y-2.5">
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-500 uppercase mb-1">Jumlah Poin (+ / -)</label>
+                                    <input type="number" x-model.number="manualPointAmount" placeholder="Contoh: 15 atau -5" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-500 uppercase mb-1">Keterangan / Alasan</label>
+                                    <input type="text" x-model="manualPointDesc" placeholder="Contoh: Bonus keaktifan kelas" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                </div>
+                                <button @click="addManualPoints()" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-1.5 rounded-lg text-xs font-medium shadow transition">Simpan Poin Manual</button>
+                            </div>
+                        </div>
+
+                        <!-- Tukar Hadiah -->
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3 sm:col-span-2">
                             <h4 class="font-bold text-sm text-slate-700 border-b pb-2">🎁 Tukar Hadiah</h4>
-                            <div class="space-y-2 max-h-56 overflow-y-auto">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto">
                                 <template x-for="item in rewards" :key="item.id">
-                                    <div class="flex justify-between items-center bg-slate-50 p-2 rounded-xl">
+                                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border">
                                         <div>
                                             <p class="text-xs font-semibold" x-text="item.name"></p>
                                             <p class="text-[10px] text-amber-600 font-bold" x-text="item.cost + ' Poin'"></p>
@@ -212,7 +238,7 @@
             </div>
         </div>
 
-        <!-- ================= TAB 4: KELOLA HADIAH & POIN (BARU) ================= -->
+        <!-- ================= TAB 4: KELOLA HADIAH & POIN ================= -->
         <div x-show="activeTab === 'pengaturan'" class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
@@ -295,7 +321,12 @@
                 selectedStudentId: null,
                 inputTargetClass: '1',
                 bulkNames: '',
+                studentSearchQuery: '', // State pencarian siswa
                 attendanceDate: new Date().toISOString().split('T')[0],
+                
+                // State untuk input poin manual
+                manualPointAmount: '',
+                manualPointDesc: '',
                 
                 // Data dari LocalStorage atau Default
                 students: JSON.parse(localStorage.getItem('santri_all_students')) || [],
@@ -328,6 +359,16 @@
                     return this.students.filter(s => s.classGroup === this.selectedClass);
                 },
 
+                // Computed property untuk memfilter siswa berdasarkan pencarian
+                get filteredStudentsInClass() {
+                    if (!this.studentSearchQuery.trim()) {
+                        return this.studentsInClass;
+                    }
+                    return this.studentsInClass.filter(s => 
+                        s.name.toLowerCase().includes(this.studentSearchQuery.toLowerCase())
+                    );
+                },
+
                 get selectedStudent() {
                     return this.students.find(s => s.id === this.selectedStudentId);
                 },
@@ -358,6 +399,27 @@
                     this.selectedStudent.points += amount;
                     this.saveData();
                     alert(`Berhasil menambahkan ${amount} poin (${activityName}) untuk ${this.selectedStudent.name}!`);
+                },
+
+                // Fungsi untuk memasukkan poin manual secara kustom
+                addManualPoints() {
+                    if (!this.selectedStudent) return;
+                    if (this.manualPointAmount === '' || isNaN(this.manualPointAmount)) {
+                        alert('Masukkan jumlah poin yang valid!');
+                        return;
+                    }
+                    if (!this.manualPointDesc.trim()) {
+                        alert('Mohon isi keterangan/alasan pemberian poin manual!');
+                        return;
+                    }
+                    
+                    const amount = parseInt(this.manualPointAmount);
+                    this.selectedStudent.points += amount;
+                    this.saveData();
+                    
+                    alert(`Berhasil memperbarui ${amount} poin (${this.manualPointDesc}) untuk ${this.selectedStudent.name}!`);
+                    this.manualPointAmount = '';
+                    this.manualPointDesc = '';
                 },
 
                 redeemReward(item) {
