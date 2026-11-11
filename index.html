@@ -21,8 +21,8 @@
             <div class="flex flex-wrap justify-center bg-emerald-700 p-1 rounded-xl text-xs sm:text-sm font-semibold gap-1">
                 <button @click="activeTab = 'poin'" :class="activeTab === 'poin' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-3 py-1.5 rounded-lg transition">✨ Poin & Hadiah</button>
                 <button @click="activeTab = 'absensi'" :class="activeTab === 'absensi' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-3 py-1.5 rounded-lg transition">📋 Rekap Absensi</button>
-                <button @click="activeTab = 'siswa'" :class="activeTab === 'siswa' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-3 py-1.5 rounded-lg transition">👥 Kelola Siswa</button>
-                <button @click="activeTab = 'pengaturan'" :class="activeTab === 'pengaturan' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-3 py-1.5 rounded-lg transition">⚙️ Kelola Hadiah & Poin</button>
+                <button @click="switchTab('siswa')" :class="activeTab === 'siswa' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-3 py-1.5 rounded-lg transition">👥 Kelola Siswa 🔒</button>
+                <button @click="switchTab('pengaturan')" :class="activeTab === 'pengaturan' ? 'bg-white text-emerald-800 shadow' : 'text-white hover:bg-emerald-600'" class="px-3 py-1.5 rounded-lg transition">⚙️ Kelola Hadiah & Poin 🔒</button>
             </div>
         </div>
     </header>
@@ -43,6 +43,25 @@
             </div>
             <div class="w-full sm:w-2/3 text-right text-sm text-slate-500">
                 Total Siswa di Kelas: <span class="font-bold text-slate-700" x-text="studentsInClass.length">0</span> anak
+            </div>
+        </div>
+
+        <!-- ================= MODAL / FORM LOGIN ADMIN ================= -->
+        <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 max-w-md mx-auto space-y-4" x-show="activeTab === 'auth_admin'">
+            <div class="text-center space-y-1">
+                <span class="text-3xl">🔐</span>
+                <h2 class="font-bold text-lg text-slate-700">Autentikasi Admin</h2>
+                <p class="text-xs text-slate-400">Masukkan password admin untuk mengakses menu <span class="font-semibold text-emerald-600" x-text="targetProtectedTab === 'siswa' ? 'Kelola Siswa' : 'Kelola Hadiah & Poin'"></span>.</p>
+            </div>
+            <div class="space-y-3 pt-2">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Password Admin</label>
+                    <input type="password" x-model="adminPasswordInput" @keyup.enter="verifyAdmin()" placeholder="Masukkan password..." class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div class="flex gap-2">
+                    <button @click="verifyAdmin()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl text-xs font-medium shadow transition">Masuk</button>
+                    <button @click="activeTab = 'poin'" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-xl text-xs font-medium">Batal</button>
+                </div>
             </div>
         </div>
 
@@ -78,7 +97,7 @@
                         <p class="text-xs text-slate-400 italic text-center py-4">Siswa tidak ditemukan.</p>
                     </template>
                     <template x-if="!selectedClass || studentsInClass.length === 0">
-                        <p class="text-xs text-slate-400 italic text-center py-6">Pilih kelas terlebih dahulu atau tambahkan siswa di tab Kelola Siswa.</p>
+                        <p class="text-xs text-slate-400 italic text-center py-6">Pilih kelas terlebih dahulu. (Penambahan siswa baru hanya dapat dilakukan oleh Admin).</p>
                     </template>
                 </div>
 
@@ -199,10 +218,13 @@
             </div>
         </div>
 
-        <!-- ================= TAB 3: KELOLA SISWA (INPUT MASSAL) ================= -->
+        <!-- ================= TAB 3: KELOLA SISWA (KHUSUS ADMIN) ================= -->
         <div x-show="activeTab === 'siswa'" class="space-y-6">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4 max-w-xl mx-auto">
-                <h2 class="font-bold text-lg text-slate-700 border-b pb-2">📥 Input Massal Nama Siswa</h2>
+                <div class="flex justify-between items-center border-b pb-2">
+                    <h2 class="font-bold text-lg text-slate-700">📥 Input Massal Nama Siswa</h2>
+                    <button @click="isAdminLoggedIn = false; activeTab = 'poin'" class="text-xs text-rose-500 hover:underline">Keluar Admin</button>
+                </div>
                 <div class="space-y-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Pilih Kelas Tujuan</label>
@@ -222,11 +244,14 @@
             </div>
         </div>
 
-        <!-- ================= TAB 4: KELOLA HADIAH & POIN (TERMASUK INPUT POIN MANUAL) ================= -->
+        <!-- ================= TAB 4: KELOLA HADIAH & POIN (KHUSUS ADMIN) ================= -->
         <div x-show="activeTab === 'pengaturan'" class="space-y-6">
+            <div class="flex justify-end">
+                <button @click="isAdminLoggedIn = false; activeTab = 'poin'" class="text-xs text-rose-500 hover:underline font-semibold bg-white px-3 py-1.5 rounded-xl border shadow-sm">🔒 Keluar Sesi Admin</button>
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
-                <!-- Menu Input Poin Manual (Ditempatkan di Tab Ini) -->
+                <!-- Menu Input Poin Manual -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                     <h2 class="font-bold text-lg text-slate-700 border-b pb-2">✍️ Input Poin Manual</h2>
                     <div class="space-y-3">
@@ -342,6 +367,11 @@
                 studentSearchQuery: '', 
                 attendanceDate: new Date().toISOString().split('T')[0],
                 
+                // State Autentikasi Admin
+                isAdminLoggedIn: false,
+                targetProtectedTab: '',
+                adminPasswordInput: '',
+                
                 // State untuk input poin manual di tab pengaturan
                 manualTargetClass: '',
                 manualTargetStudentId: '',
@@ -374,6 +404,28 @@
                 editingActivityId: null,
                 newActivityName: '',
                 newActivityPoints: '',
+
+                // Fungsi pengecekan hak akses tab admin
+                switchTab(tabName) {
+                    if (this.isAdminLoggedIn) {
+                        this.activeTab = tabName;
+                    } else {
+                        this.targetProtectedTab = tabName;
+                        this.adminPasswordInput = '';
+                        this.activeTab = 'auth_admin';
+                    }
+                },
+
+                verifyAdmin() {
+                    if (this.adminPasswordInput === 'generuscepogo') {
+                        this.isAdminLoggedIn = true;
+                        this.activeTab = this.targetProtectedTab;
+                        alert('Autentikasi berhasil! Selamat datang Admin.');
+                    } else {
+                        alert('Password salah! Akses ditolak.');
+                        this.adminPasswordInput = '';
+                    }
+                },
 
                 get studentsInClass() {
                     return this.students.filter(s => s.classGroup === this.selectedClass);
